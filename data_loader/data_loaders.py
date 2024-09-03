@@ -1,5 +1,5 @@
 from torchvision import datasets, transforms
-from torchvision.transforms import RandAugment
+from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 from base import BaseDataLoader
 from shutil import copyfile
 import os
@@ -47,7 +47,7 @@ class Stanford40(BaseDataLoader):
         transform_train = transforms.Compose([
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
-            RandAugment(num_ops=2, magnitude=9),  # RandAugment با دو عملیات و شدت 9
+            AutoAugment(policy=AutoAugmentPolicy.IMAGENET),  # استفاده از AutoAugment با سیاست ImageNet
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
@@ -61,23 +61,24 @@ def creating_dataset():
     labels_path = "./ImageSplits"
     new_dataset_path = "./StanfordActionDataset"
 
-    if not (os.path.exists(new_dataset_path)):
-        os.mkdir(new_dataset_path)
-        os.mkdir(new_dataset_path + '/' + 'train')
-        os.mkdir(new_dataset_path + '/' + 'test')
+    if not os.path.exists(new_dataset_path):
+        os.makedirs(new_dataset_path)
+        os.makedirs(os.path.join(new_dataset_path, 'train'))
+        os.makedirs(os.path.join(new_dataset_path, 'test'))
 
     txts = os.listdir(labels_path)
     for txt in txts:
-        idx = txt[0:-4].rfind('_')
-        class_name = txt[0:idx]
+        idx = txt.rfind('_')
+        class_name = txt[:idx]
         if class_name in ['actions.tx', 'test.tx', 'train.tx']:
             continue
         train_or_test = txt[idx + 1:-4]
-        txt_contents = open(labels_path + '/' + txt)
-        txt_contents = txt_contents.read()
+        txt_contents = open(os.path.join(labels_path, txt)).read()
         image_names = txt_contents.split('\n')
-        for image_name in image_names[0:-1]:
-            if not (os.path.exists(new_dataset_path + '/' + train_or_test + '/' + class_name)):
-                os.mkdir(new_dataset_path + '/' + train_or_test + '/' + class_name)
-            copyfile(images_path + '/' + image_name,
-                     new_dataset_path + '/' + train_or_test + '/' + class_name + '/' + image_name)
+        for image_name in image_names[:-1]:
+            class_path = os.path.join(new_dataset_path, train_or_test, class_name)
+            if not os.path.exists(class_path):
+                os.makedirs(class_path)
+            copyfile(os.path.join(images_path, image_name),
+                     os.path.join(class_path, image_name))
+
