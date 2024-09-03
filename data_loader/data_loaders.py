@@ -1,5 +1,5 @@
 from torchvision import datasets, transforms
-from torchvision.transforms import AutoAugment, AutoAugmentPolicy
+from torchvision.transforms import RandAugment
 from base import BaseDataLoader
 from shutil import copyfile
 import os
@@ -47,7 +47,9 @@ class Stanford40(BaseDataLoader):
         transform_train = transforms.Compose([
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
-            AutoAugment(policy=AutoAugmentPolicy.IMAGENET),  # استفاده از AutoAugment با سیاست ImageNet
+            RandAugment(num_ops=3, magnitude=15),  # RandAugment با تعداد عملیات و شدت بیشتر
+            transforms.ColorJitter(brightness=0.2, contrast=0.2),
+            transforms.RandomRotation(degrees=15),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
@@ -82,3 +84,6 @@ def creating_dataset():
             copyfile(os.path.join(images_path, image_name),
                      os.path.join(class_path, image_name))
 
+ 
+    
+                    
